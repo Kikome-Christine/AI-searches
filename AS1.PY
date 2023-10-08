@@ -32,7 +32,7 @@
 
 import pprint
 from collections import defaultdict
-
+import heapq
 from queue import PriorityQueue
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -144,25 +144,25 @@ nx.draw(G, with_labels=True)
 plt.show()
 
 
-# Define the graph as a dictionary with nodes and their edge costs
-graph = {
-    'S': {'A': 3, 'B': 1},
-    'A': {'B': 2, 'C': 2},
-    'B': {'C': 3},
-    'C': {'D': 4, 'G': 4},
-    'D': {'G': 1},
-    'G': {}
-}
+# # Define the graph as a dictionary with nodes and their edge costs
+# graph = {
+#     'S': {'A': 3, 'B': 1},
+#     'A': {'B': 2, 'C': 2},
+#     'B': {'C': 3},
+#     'C': {'D': 4, 'G': 4},
+#     'D': {'G': 1},
+#     'G': {}
+# }
 
-# Define heuristic values for each node
-heuristics = {
-    'S': 7,
-    'A': 5,
-    'B': 7,
-    'C': 4,
-    'D': 1,
-    'G': 0
-}
+# # Define heuristic values for each node
+# heuristics = {
+#     'S': 7,
+#     'A': 5,
+#     'B': 7,
+#     'C': 4,
+#     'D': 1,
+#     'G': 0
+# }
 
 # Define the start and target nodes
 start_node = 'S'
@@ -174,89 +174,96 @@ print("-------QN3: search strategies using for tree search----------")
 
 def depth_first_search(graph, start, target):
     stack = [(start, [start])]
-    visited = set() 
+     
     while stack:
         (node, path) = stack.pop()
-        visited.add(node) 
+        
         if node == target:
             return path
-        neighbors = graph[node]
-        for neighbor in neighbors:
-            if neighbor not in path and neighbor not in visited:
-                stack.append((neighbor, path + [neighbor]))
-
+        
+        children = graph.get(node, [])
+        
+        for child in children:
+            stack.append((child, path + [child]))
 dfs_path = depth_first_search(graph, start_node, target_node)
 print("DFS Path:", dfs_path)
 
 # Breadth-First Search
-def breadth_first_search(graph, start, target):
+def  breadth_first_search(tree, start, target):
     queue = [(start, [start])]
-    visited = set()  
+    
     while queue:
         (node, path) = queue.pop(0)
-        visited.add(node) 
+        
         if node == target:
             return path
-        neighbors = graph[node]
-        for neighbor in neighbors:
-            if neighbor not in path and neighbor not in visited:
-                queue.append((neighbor, path + [neighbor]))
+        
+        children = graph.get(node, [])
+        
+        for child in children:
+            queue.append((child, path + [child]))
+ 
+ 
+
+# Perform BFS on the tree and print the path
+ 
 
 bfs_path = breadth_first_search(graph, start_node, target_node)
 print("BFS Path:", bfs_path)
 
 # Uniform Cost Search
 def uniform_cost_search(graph, start, target):
-    priority_queue = [(0, start, [start])]
-    visited = set()  
-    while priority_queue:
-        (cost, node, path) = priority_queue.pop(0)
-        visited.add(node) 
+    queue = [(0, start, [start])]
+    
+    while queue:
+        (cost, node, path) = queue.pop(0)
+        
         if node == target:
             return path
-        neighbors = graph[node]
-        for neighbor, neighbor_cost in neighbors.items():
-            if neighbor not in path and neighbor not in visited:
-                new_cost = cost + neighbor_cost
-                priority_queue.append((new_cost, neighbor, path + [neighbor]))
-                priority_queue.sort(key=lambda x: x[0])
+        
+        children = graph.get(node, {}).items() 
+        
+        for child, child_cost in children:
+            queue.append((cost + child_cost, child, path + [child]))
 
 ucs_path = uniform_cost_search(graph, start_node, target_node)
 print("UCS Path:", ucs_path)
 
 # Greedy Search
 def greedy_search(graph, start, target, heuristics):
-    priority_queue = [(heuristics[start], start, [start])]
-    visited = set()  
-    while priority_queue:
-        (_, node, path) = priority_queue.pop(0)
-        visited.add(node)  
+    queue = [(heuristics[start], start, [start])]
+
+    while queue:
+        (_, node, path) = queue.pop(0)
+
         if node == target:
             return path
-        neighbors = graph[node]
-        for neighbor in sorted(neighbors, key=lambda x: heuristics[x]):
-            if neighbor not in path and neighbor not in visited:
-                priority_queue.append((heuristics[neighbor], neighbor, path + [neighbor]))
-                priority_queue.sort(key=lambda x: x[0])
+
+        children = graph.get(node, {}).items()
+
+        for child, _ in sorted(children, key=lambda x: heuristics[x[0]]):
+            queue.append((heuristics[child], child, path + [child]))
+
 
 greedy_path = greedy_search(graph, start_node, target_node, heuristics)
 print("Greedy Search Path:", greedy_path)
 
 # A* Search
 def a_star_search(graph, start, target, heuristics):
-    priority_queue = [(heuristics[start], 0, start, [start])]
-    visited = set()  
-    while priority_queue:
-        (_, cost, node, path) = priority_queue.pop(0)
-        visited.add(node)  
+    queue = [(heuristics[start], 0, start, [start])]
+
+    while queue:
+        (_, cost, node, path) = queue.pop(0)
+
         if node == target:
             return path
-        neighbors = graph[node]
-        for neighbor, neighbor_cost in sorted(neighbors.items(), key=lambda x: heuristics[x[0]]):
-            if neighbor not in path and neighbor not in visited:
-                new_cost = cost + neighbor_cost
-                priority_queue.append((new_cost + heuristics[neighbor], new_cost, neighbor, path + [neighbor]))
-                priority_queue.sort(key=lambda x: x[0])
+
+        children = graph.get(node, {}).items()
+
+        for child, child_cost in children:
+            new_cost = cost + child_cost
+            queue.append((new_cost + heuristics[child], new_cost, child, path + [child]))
+            queue.sort(key=lambda x: x[0])
 
 a_star_path = a_star_search(graph, start_node, target_node, heuristics)
 print("A* Search Path:", a_star_path)
@@ -266,14 +273,20 @@ print("A* Search Path:", a_star_path)
 print("------------------QN4: search strategies using for GRAPH search------------------------")
 def depth_first_search(graph, start, target):
     stack = [(start, [start])]
+    visited = set()
+    
     while stack:
         (node, path) = stack.pop()
+        visited.add(node)
+        
         if node == target:
             return path
-        neighbors = graph[node]
+        
+        neighbors = [neighbor for neighbor in graph.get(node, []) if neighbor not in visited]
+        
         for neighbor in neighbors:
-            if neighbor not in path:
-                stack.append((neighbor, path + [neighbor]))
+            stack.append((neighbor, path + [neighbor]))
+
 
 dfs_path = depth_first_search(graph, start_node, target_node)
 print("DFS Path:", dfs_path)
@@ -281,14 +294,19 @@ print("DFS Path:", dfs_path)
 
 def breadth_first_search(graph, start, target):
     queue = [(start, [start])]
+    visited = set()
+    
     while queue:
         (node, path) = queue.pop(0)
+        visited.add(node)
+        
         if node == target:
             return path
-        neighbors = graph[node]
+        
+        neighbors = [neighbor for neighbor in graph.get(node, []) if neighbor not in visited]
+        
         for neighbor in neighbors:
-            if neighbor not in path:
-                queue.append((neighbor, path + [neighbor]))
+            queue.append((neighbor, path + [neighbor]))
 
 bfs_path = breadth_first_search(graph, start_node, target_node)
 print("BFS Path:", bfs_path)
@@ -297,16 +315,21 @@ print("BFS Path:", bfs_path)
 
 def uniform_cost_search(graph, start, target):
     priority_queue = [(0, start, [start])]
+    visited = set()
+    
     while priority_queue:
-        (cost, node, path) = priority_queue.pop(0)
+        (cost, node, path) = heapq.heappop(priority_queue)
+        visited.add(node)
+        
         if node == target:
             return path
-        neighbors = graph[node]
+        
+        neighbors = graph.get(node, [])
+        
         for neighbor, neighbor_cost in neighbors.items():
-            if neighbor not in path:
+            if neighbor not in path and neighbor not in visited:
                 new_cost = cost + neighbor_cost
-                priority_queue.append((new_cost, neighbor, path + [neighbor]))
-                priority_queue.sort(key=lambda x: x[0])
+                heapq.heappush(priority_queue, (new_cost, neighbor, path + [neighbor]))
 
 ucs_path = uniform_cost_search(graph, start_node, target_node)
 print("UCS Path:", ucs_path)
@@ -318,15 +341,21 @@ print("UCS Path:", ucs_path)
 
 def greedy_search(graph, start, target, heuristics):
     priority_queue = [(heuristics[start], start, [start])]
+    visited = set()
+
     while priority_queue:
-        (_, node, path) = priority_queue.pop(0)
+        (_, node, path) = heapq.heappop(priority_queue)
+        visited.add(node)
+
         if node == target:
             return path
-        neighbors = graph[node]
-        for neighbor, _ in sorted(neighbors.items(), key=lambda x: heuristics[x[0]]):
-            if neighbor not in path:
-                priority_queue.append((heuristics[neighbor], neighbor, path + [neighbor]))
-                priority_queue.sort(key=lambda x: x[0])
+
+        neighbors = graph.get(node, {})
+
+        for neighbor in sorted(neighbors, key=lambda x: heuristics[x]):
+            if neighbor not in path and neighbor not in visited:
+                heapq.heappush(priority_queue, (heuristics[neighbor], neighbor, path + [neighbor]))
+
 greedy_path = greedy_search(graph, start_node, target_node, heuristics)
 print("Greedy Search Path:", greedy_path)
 
@@ -334,16 +363,19 @@ print("Greedy Search Path:", greedy_path)
 
 def a_star_search(graph, start, target, heuristics):
     priority_queue = [(heuristics[start], 0, start, [start])]
+    visited = set()
+
     while priority_queue:
-        (_, cost, node, path) = priority_queue.pop(0)
+        (_, cost, node, path) = heapq.heappop(priority_queue)
+
         if node == target:
             return path
-        neighbors = graph[node]
-        for neighbor, neighbor_cost in sorted(neighbors.items(), key=lambda x: heuristics[x[0]]):
-            if neighbor not in path:
-                new_cost = cost + neighbor_cost
-                priority_queue.append((new_cost + heuristics[neighbor], new_cost, neighbor, path + [neighbor]))
-                priority_queue.sort(key=lambda x: x[0])
+
+        neighbors = graph.get(node, {})
+
+        for neighbor, neighbor_cost in neighbors.items():
+            new_cost = cost + neighbor_cost
+            heapq.heappush(priority_queue, (new_cost + heuristics[neighbor], new_cost, neighbor, path + [neighbor]))
 
 a_star_path = a_star_search(graph, start_node, target_node, heuristics)
 print("A* Search Path:", a_star_path)
@@ -353,16 +385,21 @@ print("------------QN5:print out the order in which states are expanded, the pat
 
 def tree_depth_first_search(graph, start, target):
     stack = [(start, [start])]
-    expanded_states = []  # To store the order of expanded states
+    expanded_states = []
+
     while stack:
         (node, path) = stack.pop()
-        expanded_states.append(node)  # Add the expanded state to the list
+        expanded_states.append(node)
+
         if node == target:
-            return expanded_states, path
-        neighbors = graph[node]
-        for neighbor in sorted(neighbors, reverse=True):  # Break ties alphabetically by reversing the order
-            if neighbor not in path:
-                stack.append((neighbor, path + [neighbor]))
+            return path, expanded_states
+
+        children = graph.get(node, [])
+
+        for child in children:
+            stack.append((child, path + [child]))
+
+    return None, expanded_states
 
 
 def tree_breadth_first_search(graph, start, target):
@@ -373,55 +410,71 @@ def tree_breadth_first_search(graph, start, target):
         expanded_states.append(node)  # Add the expanded state to the list
         if node == target:
             return expanded_states, path
-        neighbors = graph[node]
-        for neighbor in sorted(neighbors):  # Break ties alphabetically
-            if neighbor not in path:
-                queue.append((neighbor, path + [neighbor]))
+        children = graph.get(node, [])
+
+        for child in children:
+            queue.append((child, path + [child]))
+
+    return None, expanded_states
 
 
 def tree_uniform_cost_search(graph, start, target):
     priority_queue = [(0, start, [start])]
-    expanded_states = []  # To store the order of expanded states
+    expanded_states = []
+
     while priority_queue:
         (cost, node, path) = priority_queue.pop(0)
-        expanded_states.append(node)  # Add the expanded state to the list
+        expanded_states.append(node)
+
         if node == target:
-            return expanded_states, path
-        neighbors = graph[node]
-        for neighbor, neighbor_cost in sorted(neighbors.items()):  # Break ties alphabetically
-            if neighbor not in path:
-                new_cost = cost + neighbor_cost
-                priority_queue.append((new_cost, neighbor, path + [neighbor]))
-                priority_queue.sort(key=lambda x: (x[0], x[1]))  # Sort by cost and then by name
+            return path, expanded_states
+
+        children = graph.get(node, {}).items()
+
+        for child, child_cost in children:
+            priority_queue.append((cost + child_cost, child, path + [child]))
+            priority_queue.sort(key=lambda x: x[0])
+
+    return None, expanded_states
 
 def tree_greedy_search(graph, start, target, heuristics):
     priority_queue = [(heuristics[start], start, [start])]
-    expanded_states = []  # To store the order of expanded states
+    expanded_states = []
+
     while priority_queue:
         (_, node, path) = priority_queue.pop(0)
-        expanded_states.append(node)  # Add the expanded state to the list
+        expanded_states.append(node)
+
         if node == target:
-            return expanded_states, path
-        neighbors = graph[node]
-        for neighbor in sorted(neighbors, key=lambda x: heuristics[x]):  # Break ties alphabetically based on heuristic value
-            if neighbor not in path:
-                priority_queue.append((heuristics[neighbor], neighbor, path + [neighbor]))
-                priority_queue.sort(key=lambda x: (x[0], x[1]))  # Sort by heuristic and then by name
+            return path, expanded_states
+
+        children = graph.get(node, [])
+
+        for child in sorted(children, key=lambda x: heuristics[x[0]]):
+            priority_queue.append((heuristics[child[0]], child[0], path + [child[0]]))
+            priority_queue.sort(key=lambda x: x[0])
+
+    return None, expanded_states
 
 def tree_a_star_search(graph, start, target, heuristics):
     priority_queue = [(heuristics[start], 0, start, [start])]
-    expanded_states = []  # To store the order of expanded states
+    expanded_states = []
+
     while priority_queue:
         (_, cost, node, path) = priority_queue.pop(0)
-        expanded_states.append(node)  # Add the expanded state to the list
+        expanded_states.append(node)
+
         if node == target:
-            return expanded_states, path
-        neighbors = graph[node]
-        for neighbor, neighbor_cost in sorted(neighbors.items(), key=lambda x: heuristics[x[0]]):  # Break ties alphabetically based on heuristic value
-            if neighbor not in path:
-                new_cost = cost + neighbor_cost
-                priority_queue.append((heuristics[neighbor], new_cost, neighbor, path + [neighbor]))
-                priority_queue.sort(key=lambda x: (x[0], x[1]))  # Sort by heuristic and then by name
+            return path, expanded_states
+
+        children = graph.get(node, {}).items()
+
+        for child, child_cost in children:
+            new_cost = cost + child_cost
+            priority_queue.append((new_cost + heuristics[child], new_cost, child, path + [child]))
+            priority_queue.sort(key=lambda x: x[0])
+
+    return None, expanded_states
 
 # Test the custom search algorithms
 start_node = 'S'
@@ -462,84 +515,111 @@ print("----QN 6:print out the order in which states are expanded, the path retur
 
 def graph_depth_first_search(graph, start, target):
     stack = [(start, [start])]
-    visited_nodes = set()  # To keep track of visited nodes
-    expanded_states = []  # To store the order of expanded states
+    visited = set()
+    expanded_states = []
+
     while stack:
         (node, path) = stack.pop()
-        visited_nodes.add(node)  # Mark the current node as visited
-        expanded_states.append(node)  # Add the expanded state to the list
+        expanded_states.append(node)
+
         if node == target:
-            return expanded_states, path
-        neighbors = graph[node]
-        for neighbor in sorted(neighbors, reverse=True):  # Break ties alphabetically by reversing the order
-            if neighbor not in path and neighbor not in visited_nodes:
+            return path, expanded_states
+
+        if node not in visited:
+            visited.add(node)
+            neighbors = graph.get(node, [])
+
+            for neighbor in neighbors:
                 stack.append((neighbor, path + [neighbor]))
 
+    return None, expanded_states
 def graph_breadth_first_search(graph, start, target):
     queue = [(start, [start])]
-    visited_nodes = set()  # To keep track of visited nodes
-    expanded_states = []  # To store the order of expanded states
+    visited = set()
+    expanded_states = []
+
     while queue:
         (node, path) = queue.pop(0)
-        visited_nodes.add(node)  # Mark the current node as visited
-        expanded_states.append(node)  # Add the expanded state to the list
+        expanded_states.append(node)
+
         if node == target:
-            return expanded_states, path
-        neighbors = graph[node]
-        for neighbor in sorted(neighbors):  # Break ties alphabetically
-            if neighbor not in path and neighbor not in visited_nodes:
+            return path, expanded_states
+
+        if node not in visited:
+            visited.add(node)
+            neighbors = graph.get(node, [])
+
+            for neighbor in neighbors:
                 queue.append((neighbor, path + [neighbor]))
+
+    return None, expanded_states
 
 def graph_uniform_cost_search(graph, start, target):
     priority_queue = [(0, start, [start])]
-    visited_nodes = set()  # To keep track of visited nodes
-    expanded_states = []  # To store the order of expanded states
+    visited = set()
+    expanded_states = []
+
     while priority_queue:
         (cost, node, path) = priority_queue.pop(0)
-        visited_nodes.add(node)  # Mark the current node as visited
-        expanded_states.append(node)  # Add the expanded state to the list
+        expanded_states.append(node)
+
         if node == target:
-            return expanded_states, path
-        neighbors = graph[node]
-        for neighbor, neighbor_cost in sorted(neighbors.items()):  # Break ties alphabetically
-            if neighbor not in path and neighbor not in visited_nodes:
+            return path, expanded_states
+
+        if node not in visited:
+            visited.add(node)
+            neighbors = graph.get(node, {}).items()
+
+            for neighbor, neighbor_cost in neighbors:
                 new_cost = cost + neighbor_cost
                 priority_queue.append((new_cost, neighbor, path + [neighbor]))
-                priority_queue.sort(key=lambda x: (x[0], x[1]))  # Sort by cost and then by name
+                priority_queue.sort(key=lambda x: x[0])
 
+    return None, expanded_states
+ 
 def graph_greedy_search(graph, start, target, heuristics):
     priority_queue = [(heuristics[start], start, [start])]
-    visited_nodes = set()  # To keep track of visited nodes
-    expanded_states = []  # To store the order of expanded states
+    visited = set()
+    expanded_states = []
+
     while priority_queue:
         (_, node, path) = priority_queue.pop(0)
-        visited_nodes.add(node)  # Mark the current node as visited
-        expanded_states.append(node)  # Add the expanded state to the list
+        expanded_states.append(node)
+
         if node == target:
-            return expanded_states, path
-        neighbors = graph[node]
-        for neighbor in sorted(neighbors, key=lambda x: heuristics[x]):  # Break ties alphabetically based on heuristic value
-            if neighbor not in path and neighbor not in visited_nodes:
+            return path, expanded_states
+
+        if node not in visited:
+            visited.add(node)
+            neighbors = graph.get(node, [])
+
+            for neighbor in sorted(neighbors, key=lambda x: heuristics[x]):
                 priority_queue.append((heuristics[neighbor], neighbor, path + [neighbor]))
-                priority_queue.sort(key=lambda x: (x[0], x[1]))  # Sort by heuristic and then by name
- 
+                priority_queue.sort(key=lambda x: x[0])
+
+    return None, expanded_states
 def graph_a_star_search(graph, start, target, heuristics):
     priority_queue = [(heuristics[start], 0, start, [start])]
-    visited_nodes = set()  # To keep track of visited nodes
-    expanded_states = []  # To store the order of expanded states
+    visited = set()
+    expanded_states = []
+
     while priority_queue:
         (_, cost, node, path) = priority_queue.pop(0)
-        visited_nodes.add(node)  # Mark the current node as visited
-        expanded_states.append(node)  # Add the expanded state to the list
-        if node == target:
-            return expanded_states, path
-        neighbors = graph[node]
-        for neighbor, neighbor_cost in sorted(neighbors.items(), key=lambda x: heuristics[x[0]]):  # Break ties alphabetically based on heuristic value
-            if neighbor not in path and neighbor not in visited_nodes:
-                new_cost = cost + neighbor_cost
-                priority_queue.append((heuristics[neighbor], new_cost, neighbor, path + [neighbor]))
-                priority_queue.sort(key=lambda x: (x[0], x[1]))  # Sort by heuristic and then by name
+        expanded_states.append(node)
 
+        if node == target:
+            return path, expanded_states
+
+        if node not in visited:
+            visited.add(node)
+            neighbors = graph.get(node, {}).items()
+
+            for neighbor, neighbor_cost in neighbors:
+                new_cost = cost + neighbor_cost
+                priority_queue.append((new_cost + heuristics[neighbor], new_cost, neighbor, path + [neighbor]))
+                priority_queue.sort(key=lambda x: x[0])
+
+    return None, expanded_states
 
 # Depth-First Search
 expanded_states_dfs, dfs_path = graph_depth_first_search(graph, start_node, target_node)
@@ -570,3 +650,6 @@ expanded_states_astar, astar_path = graph_a_star_search(graph, start_node, targe
 print("\nA* Search Expanded States:", expanded_states_astar)
 print("A* Search Path:", astar_path)
 print("A* Search States Not Expanded:", [node for node in graph if node not in expanded_states_astar])
+
+
+ 
